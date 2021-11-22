@@ -7,21 +7,7 @@ package io.dapr.client;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Strings;
-import io.dapr.client.domain.DeleteStateRequest;
-import io.dapr.client.domain.ExecuteStateTransactionRequest;
-import io.dapr.client.domain.GetBulkSecretRequest;
-import io.dapr.client.domain.GetBulkStateRequest;
-import io.dapr.client.domain.GetSecretRequest;
-import io.dapr.client.domain.GetStateRequest;
-import io.dapr.client.domain.HttpExtension;
-import io.dapr.client.domain.InvokeBindingRequest;
-import io.dapr.client.domain.InvokeMethodRequest;
-import io.dapr.client.domain.PublishEventRequest;
-import io.dapr.client.domain.SaveStateRequest;
-import io.dapr.client.domain.State;
-import io.dapr.client.domain.StateOptions;
-import io.dapr.client.domain.TransactionalStateOperation;
-import io.dapr.client.domain.TransactionalStateRequest;
+import io.dapr.client.domain.*;
 import io.dapr.config.Properties;
 import io.dapr.exceptions.DaprException;
 import io.dapr.serializer.DaprObjectSerializer;
@@ -359,6 +345,21 @@ public class DaprClientHttp extends AbstractDaprClient {
     } catch (Exception ex) {
       return DaprException.wrapMono(ex);
     }
+  }
+
+  @Override
+  public <T> Mono<List<ConfigurationItem>> getConfiguration(String storeName, List<String> key, HashMap<String, String> metadata) {
+    return null;
+  }
+
+  @Override
+  public <T> Mono<Void> subscribeConfiguration(String storeName, List<String> keys, ConfigSubscribeHandler handler) {
+    return null;
+  }
+
+  @Override
+  public <T> Mono<Void> unsubscribeConfiguration(String storeName, List<String> keys) {
+    return null;
   }
 
   /**
