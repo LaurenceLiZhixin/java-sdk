@@ -5,23 +5,11 @@
 
 package io.dapr.client;
 
-import io.dapr.client.domain.DeleteStateRequest;
-import io.dapr.client.domain.ExecuteStateTransactionRequest;
-import io.dapr.client.domain.GetBulkSecretRequest;
-import io.dapr.client.domain.GetBulkStateRequest;
-import io.dapr.client.domain.GetSecretRequest;
-import io.dapr.client.domain.GetStateRequest;
-import io.dapr.client.domain.HttpExtension;
-import io.dapr.client.domain.InvokeBindingRequest;
-import io.dapr.client.domain.InvokeMethodRequest;
-import io.dapr.client.domain.PublishEventRequest;
-import io.dapr.client.domain.SaveStateRequest;
-import io.dapr.client.domain.State;
-import io.dapr.client.domain.StateOptions;
-import io.dapr.client.domain.TransactionalStateOperation;
+import io.dapr.client.domain.*;
 import io.dapr.utils.TypeRef;
 import reactor.core.publisher.Mono;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -382,6 +370,35 @@ public interface DaprClient extends AutoCloseable {
    * @return A Mono Plan for the requested State.
    */
   <T> Mono<State<T>> getState(GetStateRequest request, TypeRef<T> type);
+
+  /**
+   *
+   * @param storeName
+   * @param key
+   * @param metadata
+   * @param <T>
+   * @return
+   */
+  <T> Mono<List<ConfigurationItem>> getConfiguration(String storeName, List<String> key, HashMap<String, String> metadata);
+
+  /**
+   *
+   * @param storeName
+   * @param keys
+   * @param handler
+   * @param <T>
+   * @return
+   */
+  <T> Mono<Void> subscribeConfiguration(String storeName, List<String> keys, ConfigSubscribeHandler handler);
+
+  /**
+   *
+   * @param storeName
+   * @param keys
+   * @param <T>
+   * @return
+   */
+  <T> Mono<Void> unsubscribeConfiguration(String storeName, List<String> keys);
 
   /**
    * Retrieve bulk States based on their keys.

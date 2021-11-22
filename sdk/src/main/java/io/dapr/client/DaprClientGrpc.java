@@ -9,20 +9,7 @@ import com.google.common.base.Strings;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
-import io.dapr.client.domain.DeleteStateRequest;
-import io.dapr.client.domain.ExecuteStateTransactionRequest;
-import io.dapr.client.domain.GetBulkSecretRequest;
-import io.dapr.client.domain.GetBulkStateRequest;
-import io.dapr.client.domain.GetSecretRequest;
-import io.dapr.client.domain.GetStateRequest;
-import io.dapr.client.domain.HttpExtension;
-import io.dapr.client.domain.InvokeBindingRequest;
-import io.dapr.client.domain.InvokeMethodRequest;
-import io.dapr.client.domain.PublishEventRequest;
-import io.dapr.client.domain.SaveStateRequest;
-import io.dapr.client.domain.State;
-import io.dapr.client.domain.StateOptions;
-import io.dapr.client.domain.TransactionalStateOperation;
+import io.dapr.client.domain.*;
 import io.dapr.config.Properties;
 import io.dapr.exceptions.DaprException;
 import io.dapr.internal.opencensus.GrpcWrapper;
@@ -46,9 +33,7 @@ import reactor.util.context.Context;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -300,6 +285,80 @@ public class DaprClientGrpc extends AbstractDaprClient {
    * {@inheritDoc}
    */
   @Override
+  public <T> Mono<List<ConfigurationItem>> getConfiguration(String storeName, List<String> keys, HashMap<String, String > metadata){
+    try{
+      DaprProtos.GetConfigurationRequest.Builder getConfigurationItemsRequestBuilder = DaprProtos.GetConfigurationRequest.newBuilder()
+            .setStoreName(storeName);
+      getConfigurationItemsRequestBuilder.putAllMetadata(metadata);
+      for(int i = 0; i < keys.size(); i++){
+        getConfigurationItemsRequestBuilder.setKeys(i, keys.get(i));
+      }
+      DaprProtos.GetConfigurationRequest envelope = getConfigurationItemsRequestBuilder.build();
+      return Mono.subscriberContext().flatMap(
+              context ->
+                      this.<DaprProtos.GetConfigurationResponse>createMono(
+                              it -> intercept(context, asyncStub).getConfigurationAlpha1(envelope, it)
+                      )
+      ).map(
+            it -> {
+              try {
+                return buildConfigurationItems(it);
+              } catch (IOException ex) {
+                throw DaprException.propagate(ex);
+              }
+            }
+      );
+    } catch (Exception ex) {
+      return DaprException.wrapMono(ex);
+    }
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public <T> Mono<Void> subscribeConfiguration(String storeName, List<String> keys, ConfigSubscribeHandler handler) {
+    try {
+      DaprProtos.SubscribeConfigurationRequest.Builder subscribeConfigurationBuilder = DaprProtos.SubscribeConfigurationRequest.newBuilder()
+              .setStoreName(storeName);
+      for (int i = 0; i < keys.size(); i++) {
+        subscribeConfigurationBuilder.setKeys(i, keys.get(i));
+      }
+      DaprProtos.SubscribeConfigurationRequest envelope = subscribeConfigurationBuilder.build();
+      return Mono.subscriberContext().flatMap(
+              context ->
+                      this.<DaprProtos.SubscribeConfigurationResponse>createMono(
+                              it -> intercept(context, asyncStub).subscribeConfigurationAlpha1(envelope, it)
+                      )
+      ).map(
+              it -> {
+//                try {
+
+//                } catch (IOException ex) {
+//                  throw DaprException.propagate(ex);
+//                }
+                System.out.println(it);
+                return null;
+              }
+      );
+    } catch (Exception ex) {
+      return DaprException.wrapMono(ex);
+    }
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public <T> Mono<Void> unsubscribeConfiguration(String storeName, List<String> keys) {
+    return null;
+  }
+
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
   public <T> Mono<List<State<T>>> getBulkState(GetBulkStateRequest request, TypeRef<T> type) {
     try {
       final String stateStoreName = request.getStoreName();
@@ -381,6 +440,22 @@ public class DaprClientGrpc extends AbstractDaprClient {
       etag = null;
     }
     return new State<>(requestedKey, value, etag, response.getMetadataMap(), stateOptions);
+  }
+
+
+  private <T> List<ConfigurationItem> buildConfigurationItems(
+          DaprProtos.GetConfigurationResponse response) throws IOException {
+    List<CommonProtos.ConfigurationItem> items = response.getItemsList();
+    List<ConfigurationItem> configurationItems = new ArrayList<>();
+    for (CommonProtos.ConfigurationItem item : items){
+      configurationItems.add(new ConfigurationItem(
+              item.getKey(),
+              item.getVersion(),
+              item.getValue(),
+              item.getMetadataMap()
+      ));
+    }
+    return configurationItems;
   }
 
   /**

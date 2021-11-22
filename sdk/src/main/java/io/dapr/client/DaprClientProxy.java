@@ -5,23 +5,11 @@
 
 package io.dapr.client;
 
-import io.dapr.client.domain.DeleteStateRequest;
-import io.dapr.client.domain.ExecuteStateTransactionRequest;
-import io.dapr.client.domain.GetBulkSecretRequest;
-import io.dapr.client.domain.GetBulkStateRequest;
-import io.dapr.client.domain.GetSecretRequest;
-import io.dapr.client.domain.GetStateRequest;
-import io.dapr.client.domain.HttpExtension;
-import io.dapr.client.domain.InvokeBindingRequest;
-import io.dapr.client.domain.InvokeMethodRequest;
-import io.dapr.client.domain.PublishEventRequest;
-import io.dapr.client.domain.SaveStateRequest;
-import io.dapr.client.domain.State;
-import io.dapr.client.domain.StateOptions;
-import io.dapr.client.domain.TransactionalStateOperation;
+import io.dapr.client.domain.*;
 import io.dapr.utils.TypeRef;
 import reactor.core.publisher.Mono;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -343,6 +331,30 @@ class DaprClientProxy implements DaprClient {
   @Override
   public <T> Mono<State<T>> getState(GetStateRequest request, TypeRef<T> type) {
     return client.getState(request, type);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public <T> Mono<List<ConfigurationItem>> getConfiguration(String storeName, List<String> key, HashMap<String, String> metadata) {
+    return client.getConfiguration(storeName, key, metadata);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public <T> Mono<Void> subscribeConfiguration(String storeName, List<String> keys, ConfigSubscribeHandler handler) {
+    return client.subscribeConfiguration(storeName, keys, handler);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public <T> Mono<Void> unsubscribeConfiguration(String storeName, List<String> keys) {
+    return client.unsubscribeConfiguration(storeName, keys);
   }
 
   /**
